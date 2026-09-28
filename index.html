@@ -1412,6 +1412,10 @@ wilaya.addEventListener("change", async function () {
 
     commune.disabled = false;
 
+if (typeof updateDelivery === "function") {
+  updateDelivery();
+}
+
   } catch (error) {
     commune.innerHTML =
       '<option value="">تعذر تحميل البلديات</option>';
