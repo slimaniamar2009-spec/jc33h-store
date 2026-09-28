@@ -1,0 +1,275 @@
+const PRODUCT_PRICE = 3900;
+
+const DELIVERY_FEES = {
+  1: { home: 1300, stopdesk: 900 },
+  2: { home: 850, stopdesk: 450 },
+  3: { home: 950, stopdesk: 550 },
+  4: { home: 850, stopdesk: 450 },
+  5: { home: 900, stopdesk: 500 },
+  6: { home: 800, stopdesk: 450 },
+  7: { home: 950, stopdesk: 550 },
+  8: { home: 1000, stopdesk: 650 },
+  9: { home: 650, stopdesk: 400 },
+  10: { home: 700, stopdesk: 550 },
+  11: { home: 1500, stopdesk: 1100 },
+  12: { home: 900, stopdesk: 0 },
+  13: { home: 900, stopdesk: 500 },
+  14: { home: 850, stopdesk: 0 },
+  15: { home: 750, stopdesk: 450 },
+  16: { home: 450, stopdesk: 300 },
+  17: { home: 950, stopdesk: 500 },
+  18: { home: 900, stopdesk: 0 },
+  19: { home: 800, stopdesk: 450 },
+  20: { home: 900, stopdesk: 0 },
+  21: { home: 900, stopdesk: 450 },
+  22: { home: 900, stopdesk: 0 },
+  23: { home: 850, stopdesk: 450 },
+  24: { home: 900, stopdesk: 450 },
+  25: { home: 800, stopdesk: 450 },
+  26: { home: 800, stopdesk: 0 },
+  27: { home: 900, stopdesk: 450 },
+  28: { home: 850, stopdesk: 500 },
+  29: { home: 900, stopdesk: 0 },
+  30: { home: 950, stopdesk: 600 },
+  31: { home: 800, stopdesk: 450 },
+  32: { home: 1000, stopdesk: 0 },
+  34: { home: 800, stopdesk: 450 },
+  35: { home: 650, stopdesk: 0 },
+  36: { home: 850, stopdesk: 0 },
+  38: { home: 900, stopdesk: 0 },
+  39: { home: 950, stopdesk: 600 },
+  40: { home: 900, stopdesk: 0 },
+  41: { home: 900, stopdesk: 450 },
+  42: { home: 900, stopdesk: 450 },
+  43: { home: 900, stopdesk: 450 },
+  44: { home: 900, stopdesk: 0 },
+  45: { home: 1000, stopdesk: 0 },
+  46: { home: 900, stopdesk: 0 },
+  47: { home: 950, stopdesk: 450 },
+  48: { home: 900, stopdesk: 450 },
+  49: { home: 1300, stopdesk: 0 },
+  51: { home: 950, stopdesk: 0 },
+  52: { home: 1000, stopdesk: 0 },
+  53: { home: 1500, stopdesk: 0 },
+  54: { home: 1500, stopdesk: 0 },
+  55: { home: 950, stopdesk: 0 },
+  57: { home: 950, stopdesk: 0 },
+  58: { home: 1000, stopdesk: 0 }
+};
+
+const ALLOWED_ORIGIN = "*";
+
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Content-Type": "application/json; charset=UTF-8"
+  };
+}
+
+function jsonResponse(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: corsHeaders()
+  });
+}
+
+export default {
+  async fetch(request, env) {
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders()
+      });
+    }
+
+    const url = new URL(request.url);
+
+    if (url.pathname !== "/api/order") {
+      return jsonResponse({
+        success: false,
+        message: "Endpoint not found"
+      }, 404);
+    }
+
+    if (request.method !== "POST") {
+      return jsonResponse({
+        success: false,
+        message: "Method not allowed"
+      }, 405);
+    }
+
+    try {
+      const data = await request.json();
+
+      const name = String(data.name || "").trim();
+      const phone = String(data.phone || "").trim();
+      const wilaya = String(data.wilaya || "").trim();
+      const commune = String(data.commune || "").trim();
+      const address = String(data.address || "").trim();
+      const deliveryType = String(data.deliveryType || "home").trim();
+
+      if (!name) {
+        return jsonResponse({
+          success: false,
+          message: "الاسم مطلوب"
+        }, 400);
+      }
+
+      if (!phone) {
+        return jsonResponse({
+          success: false,
+          message: "رقم الهاتف مطلوب"
+        }, 400);
+      }
+
+      if (!wilaya) {
+        return jsonResponse({
+          success: false,
+          message: "الولاية مطلوبة"
+        }, 400);
+      }
+
+      if (!commune) {
+        return jsonResponse({
+          success: false,
+          message: "البلدية مطلوبة"
+        }, 400);
+      }
+
+      if (!address) {
+        return jsonResponse({
+          success: false,
+          message: "العنوان مطلوب"
+        }, 400);
+      }
+
+      if (!["home", "stopdesk"].includes(deliveryType)) {
+        return jsonResponse({
+          success: false,
+          message: "نوع التوصيل غير صحيح"
+        }, 400);
+      }
+
+      const wilayaId = Number(wilaya);
+
+      if (!DELIVERY_FEES[wilayaId]) {
+        return jsonResponse({
+          success: false,
+          message: "الولاية غير صحيحة"
+        }, 400);
+      }
+
+      const fees = DELIVERY_FEES[wilayaId];
+
+      let deliveryFee;
+
+      if (deliveryType === "stopdesk") {
+        deliveryFee = fees.stopdesk;
+
+        if (deliveryFee === 0) {
+          return jsonResponse({
+            success: false,
+            message: "التوصيل إلى المكتب غير متوفر في هذه الولاية"
+          }, 400);
+        }
+      } else {
+        deliveryFee = fees.home;
+      }
+
+      const total = PRODUCT_PRICE + deliveryFee;
+
+      const reference =
+        "JC33H-" +
+        Date.now().toString(36).toUpperCase() +
+        "-" +
+        crypto.randomUUID().slice(0, 8).toUpperCase();
+
+      const ecoOrder = {
+        orders: {
+          "0": {
+            reference: reference,
+            nom_client: name,
+            telephone: phone,
+            telephone_2: "",
+            adresse: address,
+            code_postal: "",
+            commune: commune,
+            code_wilaya: String(wilayaId),
+            montant: String(total),
+            remarque:
+              deliveryType === "stopdesk"
+                ? "Livraison Stop Desk"
+                : "Livraison à domicile",
+            produit: "JC-33H",
+            stock: 1,
+            quantite: "1",
+            produit_a_recuperer: "",
+            boutique: "",
+            type: "1",
+            stop_desk: deliveryType === "stopdesk" ? 1 : 0,
+            weight: "1",
+            gps_link: ""
+          }
+        }
+      };
+
+      const ecoResponse = await fetch(
+        "https://ecommerce.ecotrack.dz/api/v1/create/orders",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${env.ECOTRACK_TOKEN}`
+          },
+          body: JSON.stringify(ecoOrder)
+        }
+      );
+
+      const ecoResult = await ecoResponse.json();
+
+      if (!ecoResponse.ok) {
+        return jsonResponse({
+          success: false,
+          message: "حدث خطأ أثناء إرسال الطلب إلى EcoTrack",
+          details: ecoResult
+        }, 502);
+      }
+
+      const result = ecoResult?.results?.[reference];
+
+      if (!result) {
+        return jsonResponse({
+          success: false,
+          message: "لم يتم الحصول على نتيجة الطلب من EcoTrack",
+          details: ecoResult
+        }, 502);
+      }
+
+      if (!result.success) {
+        return jsonResponse({
+          success: false,
+          message: result.message || "EcoTrack رفض الطلب",
+          details: result
+        }, 400);
+      }
+
+      return jsonResponse({
+        success: true,
+        tracking: result.tracking,
+        reference: reference,
+        total: total,
+        deliveryFee: deliveryFee
+      });
+
+    } catch (error) {
+      return jsonResponse({
+        success: false,
+        message: "حدث خطأ في الخادم",
+        error: error?.message || "Unknown error"
+      }, 500);
+    }
+  }
+};
