@@ -1381,46 +1381,82 @@
 
   </script>
 <script>
+<script>
 const wilaya = document.getElementById("wilaya");
 const commune = document.getElementById("commune");
 
 wilaya.addEventListener("change", async function () {
-  commune.innerHTML = '<option value="">جاري تحميل البلديات...</option>';
+
+  commune.innerHTML =
+    '<option value="">جاري تحميل البلديات...</option>';
+
   commune.disabled = true;
 
+  // تحديث سعر التوصيل مباشرة عند تغيير الولاية
+  updateDelivery();
+
   if (!this.value) {
-    commune.innerHTML = '<option value="">-- اختر الولاية أولاً --</option>';
+
+    commune.innerHTML =
+      '<option value="">-- اختر الولاية أولاً --</option>';
+
+    updateDelivery();
+
     return;
   }
 
   try {
+
     const response = await fetch(
       "https://jc33h-api.slimaniamar2009.workers.dev/test-communes?wilaya=" +
-      this.value
+      encodeURIComponent(this.value)
     );
+
+    if (!response.ok) {
+      throw new Error("تعذر الاتصال بالخادم");
+    }
 
     const data = await response.json();
 
-    commune.innerHTML = '<option value="">-- اختر البلدية --</option>';
+    if (!data.success || !Array.isArray(data.communes)) {
+      throw new Error("بيانات البلديات غير صحيحة");
+    }
+
+    commune.innerHTML =
+      '<option value="">-- اختر البلدية --</option>';
 
     data.communes.forEach(item => {
+
       const option = document.createElement("option");
+
       option.value = item.nom;
       option.textContent = item.nom;
+
       commune.appendChild(option);
+
     });
 
     commune.disabled = false;
 
-if (typeof updateDelivery === "function") {
-  updateDelivery();
-}
+    // تحديث السعر بعد تحميل البلديات
+    updateDelivery();
 
   } catch (error) {
+
     commune.innerHTML =
-      '<option value="">تعذر تحميل البلديات</option>';
+      '<option value="">تعذر تحميل بيانات البلديات</option>';
+
+    commune.disabled = true;
+
+    updateDelivery();
+
+    console.error(error);
   }
+
+});
+
+// تحديث السعر أيضًا عند تغيير البلدية
+commune.addEventListener("change", function () {
+  updateDelivery();
 });
 </script>
-</body>
-</html>
