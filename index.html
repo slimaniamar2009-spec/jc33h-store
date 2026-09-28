@@ -706,18 +706,14 @@
             </select>
           </div>
 
-          <!-- COMMUNE -->
-          <div class="form-group">
-            <label for="commune">البلدية</label>
+         <!-- COMMUNE -->
+<div class="form-group">
+  <label for="commune">البلدية</label>
 
-            <input
-              type="text"
-              id="commune"
-              name="commune"
-              placeholder="اكتب اسم البلدية"
-              required
-            >
-          </div>
+  <select id="commune" name="commune" required disabled>
+    <option value="">-- اختر الولاية أولاً --</option>
+  </select>
+</div>
 
           <!-- ADDRESS -->
           <div class="form-group">
@@ -922,8 +918,8 @@
        ELEMENTS
     ========================= */
 
-    const wilayaSelect =
-      document.getElementById("wilaya");
+   const communeSelect =
+  document.getElementById("commune");
 
     const homeOption =
       document.getElementById("homeOption");
