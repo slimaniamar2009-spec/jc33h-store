@@ -1806,7 +1806,10 @@ src="https://www.facebook.com/tr?id=1107504978768112&ev=PageView&noscript=1"
           trackingNumber.textContent =
             result.tracking ||
             "غير متوفر";
-
+fbq('track', 'Purchase', {
+  value: 3900,
+  currency: 'DZD'
+});
 
           successMessage.style.display =
             "block";
